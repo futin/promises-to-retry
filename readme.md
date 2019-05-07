@@ -1,4 +1,6 @@
-# promises-to-retry
+# promises-to-retry 
+[![NPM info][nodei.co]](https://npmjs.org/package/promises-to-retry)
+
 > Simple utility library that provides retry/reflect mechanism for a list of promises
 
 ## Install
@@ -135,3 +137,9 @@ undefined
 /*=========================================================*/
 
 ```
+
+## License
+
+MIT © [Andreja Jevtic]()
+
+[nodei.co]: https://nodei.co/npm/promises-to-retry.png?downloads=true

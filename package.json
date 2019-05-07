@@ -5,6 +5,10 @@
   "license": "MIT",
   "author": "Andreja Jevtic <andjevtic@gmail.com>",
   "main": "lib/index.js",
+  "keywords": [
+    "promise",
+    "retry"
+  ],
   "scripts": {
     "test": "ava -v",
     "docs": "jsdoc2md lib/*.js > readme.md",
@@ -16,9 +20,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/futin/promise-to-retry.git"
+    "url": "git+https://github.com/futin/promises-to-retry.git"
   },
-  "homepage": "git+https://github.com/futin/promise-to-retry#readme",
+  "homepage": "git+https://github.com/futin/promises-to-retry#readme",
   "devDependencies": {
     "ava": "^1.4.1",
     "eslint": "^5.16.0",
