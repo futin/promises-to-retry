@@ -1,7 +1,7 @@
 {
-  "name": "promise-to-retry",
+  "name": "promises-to-retry",
   "version": "1.0.0",
-  "description": "Collection of promise utility functions",
+  "description": "Simple utility library that provides retry/reflect mechanism for a list of promises",
   "license": "MIT",
   "author": "Andreja Jevtic <andjevtic@gmail.com>",
   "main": "lib/index.js",

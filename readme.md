@@ -1,21 +1,27 @@
-# promise-to-retry
-> Utility library that help with performing multiple promise-based operations
+# promises-to-retry
+> Simple utility library that provides retry/reflect mechanism for a list of promises
 
 ## Install
 
 ```sh
-$ npm install promise-to-retry
+$ npm install promises-to-retry
 ```
-
-## Usage
-
-Each usage can be found in the API description below. 
 
 ### API
 
+In order to use APIs, it is important to understand why it is required to wrap each promise in a function.
+
+Once promise is resolved/rejected, it can't be reused again. It can't be sealed, frozen or deeply cloned in order to preserve the original state. And we need to retry the original promise upon rejection, not the rejected one!
+
+That's why on every **retry** a function is being executed, and that function returns a new promise that can be again resolved/rejected!
+
+Description of each API can be found below, as well as an example of how to use the method. Additionally, there are couple of tests provided which can serve as a guideline also.
+
+
 ## reflectAllPromises ⇒ <code>Promise.&lt;Array.&lt;any&gt;&gt;</code>
-This method resolves all promises without failing, and logs an error if there is logger provided
-The purpose is not to stop the execution of multiple promises only because some of them rejected
+This method resolves all promises in parallel without failing, logs an error if there is logger provided and displays a final status of executed promise.
+It can be "resolved" or "rejected". If "rejected", it also provides a reference to rejected function that returns a promise.
+The purpose is to continue with the execution of all promises even if some of them were rejected
 
 **Kind**: global constant  
 
@@ -28,54 +34,104 @@ The purpose is not to stop the execution of multiple promises only because some 
 
 ### example 
 
-```sh
-import { reflectAllPromises } from '
-const [{ status, error, rejectedPromise }] = await reflectAllPromises([errorPromise], logger);
+```js
+const { reflectAllPromises } = require('promise-to-retry')
+const errorPromise = () => Promise.reject(new Error('Some error happened'))
+const validPromise = () => Promise.resolve({ I: 'am valid' })
+
+const listOfPromises = [errorPromise, validPromise]
+const result = await reflectAllPromises(listOfPromises)
+
+console.log(result)
+/*=========================================================*/
+[ 
+  { error: Error: Some error happened....
+    status: 'rejected',
+    rejectedPromise: [Function: errorPromise]
+  },
+  { data: { I: 'am valid' },
+   status: 'resolved'
+  }
+]
+/*=========================================================*/
+
 ```
 
 
 ## retryAllRejectedPromises ⇒ <code>Promise.&lt;Array.&lt;any&gt;&gt;</code>
-This method runs promises in parallel, and if any of the promise executions fail it will be retried.
-If maximum retry attempts is exceeded, the method will return all rejected promises so the caller may try again,
-or use different custom strategy for resolving these rejected promises
+This method runs promises in parallel, and collects all rejected promises. Once all rejected promises are collected,
+the retry mechanism kicks-in and retries rejected promises (also in parallel) until there are no more attempts.
+If maximum retry attempts is exceeded, the method will return all rejected promises so the caller may try to 
+use different strategy for resolving them.
 
 **Kind**: global constant  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | listOfPromises | <code>Array</code> | A list of functions that return a promise |
-| [logger] | <code>Object</code> | Custom logger that can be provided |
 | retryParams | <code>Object</code> | A configuration object, relevant for retrying mechanism |
 | retryParams.maxAttempts | <code>Number</code> | Maximum number of attempts by retry mechanism.                                            If not provided, there will be no retries |
 | retryParams.delay | <code>Number</code> | Delay the method execution by certain period of time. The default value                                            is 1000ms |
+| [logger] | <code>Object</code> | Custom logger that can be provided |
 
 <a name="reflectAndRetryAllRejectedPromises"></a>
 
+### example 
+
+```js
+const { retryAllRejectedPromises } = require('promise-to-retry')
+const errorPromise = () => Promise.reject(new Error('Some error happened'))
+const validPromise = () => Promise.resolve({ I: 'am valid' })
+
+const listOfPromises = [errorPromise, validPromise, errorPromise]
+const listOfParams = { maxAttempts: 3, delay: 1200 }
+
+const result = await retryAllRejectedPromises(listOfPromises, listOfParams)
+
+console.log(result)
+/*=========================================================*/
+[ 
+ [Function: errorPromise],
+ [Function: errorPromise]
+]
+/*=========================================================*/
+
+```
 ## reflectAndRetryAllRejectedPromises ⇒ <code>Promise.&lt;void&gt;</code>
-This method runs promises in parallel, and if any of the promise executions fail it will be retried in next event loop iteration.
+This method runs promises in parallel, and collects all rejected promises. Once all rejected promises are collected,
+the retry mechanism kicks-in and retries rejected promises in **next the event loop** (also in parallel) until there are no more attempts.
 This also means that the execution will not stop, and the method will always resolve to true!
 If maximum retry attempts is exceeded, the method will log an error message about number of rejected promise executions,
-but it will NOT return rejected promises.
+but it will **not** return rejected promises.
+
+This approach is faster then [retryAllRejectedPromises](#retryallrejectedpromises--promisearrayany) since it does not wait for all promises
+to retry, and it should be used only if the execution of rejected promises is not essential for further execution
 
 **Kind**: global constant  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | listOfPromises | <code>Array</code> | A list of functions that return a promise |
-| logger | <code>Object</code> | Custom logger that can be provided |
 | retryParams | <code>Object</code> | A configuration object, relevant for retrying mechanism |
 | retryParams.maxAttempts | <code>Number</code> | Maximum number of attempts by retry mechanism.                                            If not provided, there will be no retries |
 | retryParams.delay | <code>Number</code> | Delay the method execution by certain period of time. The default value                                            is 1000ms |
-
-<a name="reflectFactory"></a>
-
-## reflectFactory([logger]) ⇒ <code>function</code>
-Execute promise which is provided as a separate function in order to make a clean/original promise call.
-If there was an error, log it and return rejected promise execution so it might be used again for retrial
-
-**Kind**: global function  
-
-| Param | Type | Description |
-| --- | --- | --- |
 | [logger] | <code>Object</code> | Custom logger that can be provided |
 
+### example 
+
+```js
+const { reflectAndRetryAllRejectedPromises } = require('promise-to-retry')
+const errorPromise = () => Promise.reject(new Error('Some error happened'))
+const validPromise = () => Promise.resolve({ I: 'am valid' })
+
+const listOfPromises = [errorPromise, validPromise, errorPromise]
+const listOfParams = { maxAttempts: 3, delay: 1200 }
+
+const result = await reflectAndRetryAllRejectedPromises(listOfPromises, listOfParams)
+
+console.log(result)
+/*=========================================================*/
+undefined
+/*=========================================================*/
+
+```
