@@ -140,6 +140,6 @@ undefined
 
 ## License
 
-MIT © [Andreja Jevtic]()
+MIT © [Andreja Jevtic](https://github.com/futin)
 
 [nodei.co]: https://nodei.co/npm/promises-to-retry.png?downloads=true
