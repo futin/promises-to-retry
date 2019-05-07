@@ -1,6 +1,6 @@
 {
   "name": "promises-to-retry",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple utility library that provides retry/reflect mechanism for a list of promises",
   "license": "MIT",
   "author": "Andreja Jevtic <andjevtic@gmail.com>",
