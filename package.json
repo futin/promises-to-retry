@@ -19,11 +19,6 @@
     "url": "git+https://github.com/futin/promise-to-retry.git"
   },
   "homepage": "git+https://github.com/futin/promise-to-retry#readme",
-  "dependencies": {
-    "@babel/polyfill": "^7.4.4",
-    "@babel/preset-env": "^7.4.4",
-    "@babel/register": "^7.4.4"
-  },
   "devDependencies": {
     "ava": "^1.4.1",
     "eslint": "^5.16.0",
@@ -35,12 +30,5 @@
     "jsdoc-to-markdown": "^4.0.1",
     "nyc": "^14.1.0",
     "sinon": "^7.3.2"
-  },
-  "ava": {
-    "verbose": true,
-    "require": [
-      "@babel/register",
-      "@babel/polyfill"
-    ]
   }
 }
