@@ -1,13 +1,13 @@
 // node core modules
 
 // 3rd party modules
-import test from 'ava';
-import sinon from 'sinon';
+const test = require('ava');
+const sinon = require('sinon');
 
 // local modules
-import {
+const {
   reflectAllPromises, retryAllRejectedPromises, reflectAndRetryAllRejectedPromises, delay
-} from './lib';
+} = require('./lib');
 
 test.beforeEach((t) => {
   const logger = {
