@@ -34,6 +34,21 @@ test('Verify that reflectAllPromises does not throw an error', async (t) => {
   t.true(loggerErrorSpy.calledOnce);
 });
 
+test('Verify that reflectAllPromises does not throw an error when non-function is provided as promise', async (t) => {
+  const { logger } = t.context;
+
+  const loggerErrorSpy = sinon.spy(logger, 'error');
+
+  const [{ status, error, rejectedPromise }] = await reflectAllPromises([Promise.reject(new Error('Throw error'))], logger);
+
+  t.is(status, 'rejected');
+  t.is(rejectedPromise, undefined, 'rejectedPromise is not provided in this case');
+  t.is(error.message, 'Throw error');
+
+  t.true(loggerErrorSpy.calledWith('Reflect promise error: '));
+  t.true(loggerErrorSpy.calledOnce);
+});
+
 test('Verify that reflectAllPromises returns resolved promises', async (t) => {
   const { logger } = t.context;
   const mockResponse = { a: 'b' };
@@ -42,6 +57,19 @@ test('Verify that reflectAllPromises returns resolved promises', async (t) => {
   const validResponse = () => Promise.resolve(mockResponse);
 
   const [{ status, data }] = await reflectAllPromises([validResponse], logger);
+
+  t.is(status, 'resolved');
+  t.is(typeof data, 'object');
+  t.deepEqual(data, mockResponse);
+  t.false(loggerErrorSpy.calledOnce);
+});
+
+test('Verify that reflectAllPromises returns resolved promises when non-function is provided', async (t) => {
+  const { logger } = t.context;
+  const mockResponse = { a: 'b' };
+  const loggerErrorSpy = sinon.spy(logger, 'error');
+
+  const [{ status, data }] = await reflectAllPromises([Promise.resolve(mockResponse)], logger);
 
   t.is(status, 'resolved');
   t.is(typeof data, 'object');
