@@ -19,11 +19,12 @@ That's why on every **retry** a function is being executed, and that function re
 
 Description of each API can be found below, as well as an example of how to use the method. Additionally, there are couple of tests provided which can serve as a guideline also.
 
+Additionally [reflectAllPromises](#reflectallpromises--promisearrayany) can accept simple non-function promises if retry mechanism is not required.
 
 ## reflectAllPromises ⇒ <code>Promise.&lt;Array.&lt;any&gt;&gt;</code>
 This method resolves all promises in parallel without failing, logs an error if there is logger provided and displays a final status of executed promise.
 It can be "resolved" or "rejected". If "rejected", it also provides a reference to rejected function that returns a promise.
-The purpose is to continue with the execution of all promises even if some of them were rejected
+The purpose is to continue with the execution of all promises even if some of them were rejected.
 
 **Kind**: global constant  
 
