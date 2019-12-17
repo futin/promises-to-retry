@@ -138,6 +138,24 @@ undefined
 /*=========================================================*/
 
 ```
+## batchPromises(maxBatchSize, delayInMs, responseMode) ⇒ <code>function</code>
+This method is batching list of promises. The batches are invoked with `reflectAllPromises`, so both resolved
+and rejected results are kept. Based on `responseMode` you can receive different data.
+
+Available `ResponseMode` options:
+ - ONLY_RESOLVED -> Response will contain only `resolved` promises.
+ - ONLY_REJECTED -> Response will contain only `rejected` promises.
+ - ALL           -> Response will contain all results. Order of execution is preserved.
+ - ALL_SPLIT     -> Response will contain all results, where first item are `resolved`, and second are `rejected` promises.
+
+**Kind**: global function  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| maxBatchSize | <code>Number</code> | Number of batches to be invoked in parallel |
+| delayInMs | <code>Number</code> | Delay between batch execution |
+| responseMode | <code>ResponseMode</code> | Different mode will provide different responses, depending on caller requirements. |
+
 
 ## License
 

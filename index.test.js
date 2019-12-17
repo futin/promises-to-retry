@@ -153,7 +153,7 @@ test('Verify that batchPromises returns only resolved promises', async (t) => {
 });
 
 test('Verify that batchPromises returns only rejected promises', async (t) => {
-  const errorPromise = () => Promise.reject('Some error');
+  const errorPromise = () => Promise.reject(new Error('Some error'));
   const validResponse1 = () => Promise.resolve(1);
   const validResponse2 = () => Promise.resolve(2);
   const validResponse3 = () => Promise.resolve(3);
@@ -162,12 +162,12 @@ test('Verify that batchPromises returns only rejected promises', async (t) => {
   const batchParams = { maxBatchSize, delay: 100, responseMode: 'ONLY_REJECTED' };
   const promises = [errorPromise, validResponse1, validResponse2, validResponse3];
 
-  const response = await batchPromises(batchParams)(promises);
-  t.deepEqual(response, ['Some error']);
+  const [errorResponse] = await batchPromises(batchParams)(promises);
+  t.deepEqual(errorResponse.message, 'Some error');
 });
 
-test('Verify that batchPromises returns all promises', async (t) => {
-  const errorPromise = () => Promise.reject('Some error');
+test('Verify that batchPromises returns all promises. Order must be preserved', async (t) => {
+  const errorPromise = () => Promise.reject(new Error('Some error'));
   const response1 = 1;
   const response2 = 2;
   const response3 = 3;
@@ -179,12 +179,13 @@ test('Verify that batchPromises returns all promises', async (t) => {
   const batchParams = { maxBatchSize, delay: 100 };
   const promises = [errorPromise, validResponse1, validResponse2, validResponse3];
 
-  const response = await batchPromises(batchParams)(promises);
-  t.deepEqual(response, [response1, response2, response3, 'Some error']);
+  const [error, ...resolved] = await batchPromises(batchParams)(promises);
+  t.deepEqual(resolved, [response1, response2, response3]);
+  t.is(error.message, 'Some error');
 });
 
 test('Verify that batchPromises returns all promises, with split of resolved/rejected', async (t) => {
-  const errorPromise = () => Promise.reject('Some error');
+  const errorPromise = () => Promise.reject(new Error('Some error'));
   const response1 = 1;
   const response2 = 2;
   const response3 = 3;
@@ -194,9 +195,17 @@ test('Verify that batchPromises returns all promises, with split of resolved/rej
 
   const maxBatchSize = 2;
   const batchParams = { maxBatchSize, delay: 100, responseMode: 'ALL_SPLIT' };
-  const promises = [errorPromise, validResponse1, validResponse2, validResponse3];
+  const promises = [errorPromise, validResponse2, validResponse1, validResponse3];
 
-  const [resolved, rejected] = await batchPromises(batchParams)(promises);
-  t.deepEqual(resolved, [response1, response2, response3]);
-  t.deepEqual(rejected, ['Some error']);
+  const [resolved, [rejected]] = await batchPromises(batchParams)(promises);
+  t.deepEqual(resolved, [response2, response1, response3]);
+  t.is(rejected.message, 'Some error');
+});
+
+test('Verify that batchPromises returns [] when no promises array is provided', async (t) => {
+  const maxBatchSize = 2;
+  const batchParams = { maxBatchSize, delay: 100 };
+
+  const response = await batchPromises(batchParams)([]);
+  t.deepEqual(response, []);
 });
