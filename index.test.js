@@ -5,9 +5,11 @@ const test = require('ava');
 const sinon = require('sinon');
 
 // local modules
+const methods = require('./lib');
+
 const {
-  reflectAllPromises, retryAllRejectedPromises, reflectAndRetryAllRejectedPromises, delay
-} = require('./lib');
+  reflectAllPromises, retryAllRejectedPromises, reflectAndRetryAllRejectedPromises, delay, batchPromises
+} = methods;
 
 test.beforeEach((t) => {
   const logger = {
@@ -131,4 +133,87 @@ test('Verify that reflectAndRetryAllRejectedPromises never throws an error', asy
 
   // we try to execute failed promises after in next event loops
   t.is(loggerErrorSpy.callCount, 6, 'For each retry attempt there should be more logs per execution');
+});
+
+test('Verify that batchPromises returns only resolved promises', async (t) => {
+  const errorPromise = () => Promise.reject(new Error('Throw error'));
+  const response1 = 1;
+  const response2 = 2;
+  const response3 = 3;
+  const validResponse1 = () => Promise.resolve(response1);
+  const validResponse2 = () => Promise.resolve(response2);
+  const validResponse3 = () => Promise.resolve(response3);
+
+  const maxBatchSize = 2;
+  const batchParams = { maxBatchSize, delay: 100, responseMode: 'ONLY_RESOLVED' };
+  const promises = [errorPromise, validResponse1, validResponse2, validResponse3];
+
+  const response = await batchPromises(batchParams)(promises);
+  t.deepEqual(response, [response1, response2, response3]);
+});
+
+test('Verify that batchPromises returns only rejected promises', async (t) => {
+  const errorPromise = () => Promise.reject(new Error('Some error'));
+  const validResponse1 = () => Promise.resolve(1);
+  const validResponse2 = () => Promise.resolve(2);
+  const validResponse3 = () => Promise.resolve(3);
+
+  const maxBatchSize = 2;
+  const batchParams = { maxBatchSize, delay: 100, responseMode: 'ONLY_REJECTED' };
+  const promises = [errorPromise, validResponse1, validResponse2, validResponse3];
+
+  const [errorResponse] = await batchPromises(batchParams)(promises);
+  t.deepEqual(errorResponse.message, 'Some error');
+});
+
+test('Verify that batchPromises returns all promises. Order must be preserved', async (t) => {
+  const errorPromise = () => Promise.reject(new Error('Some error'));
+  const response1 = 1;
+  const response2 = 2;
+  const response3 = 3;
+  const validResponse1 = () => Promise.resolve(response1);
+  const validResponse2 = () => Promise.resolve(response2);
+  const validResponse3 = () => Promise.resolve(response3);
+
+  const maxBatchSize = 2;
+  const batchParams = { maxBatchSize, delay: 100 };
+  const promises = [errorPromise, validResponse1, validResponse2, validResponse3];
+
+  const [error, ...resolved] = await batchPromises(batchParams)(promises);
+  t.deepEqual(resolved, [response1, response2, response3]);
+  t.is(error.message, 'Some error');
+});
+
+test('Verify that batchPromises returns all promises, with split of resolved/rejected', async (t) => {
+  const errorPromise = () => Promise.reject(new Error('Some error'));
+  const response1 = 1;
+  const response2 = 2;
+  const response3 = 3;
+  const validResponse1 = () => Promise.resolve(response1);
+  const validResponse2 = () => Promise.resolve(response2);
+  const validResponse3 = () => Promise.resolve(response3);
+
+  const maxBatchSize = 2;
+  const batchParams = { maxBatchSize, delay: 100, responseMode: 'ALL_SPLIT' };
+  const promises = [errorPromise, validResponse2, validResponse1, validResponse3];
+
+  const [resolved, [rejected]] = await batchPromises(batchParams)(promises);
+  t.deepEqual(resolved, [response2, response1, response3]);
+  t.is(rejected.message, 'Some error');
+});
+
+test('Verify that batchPromises returns [] when no promises array is provided', async (t) => {
+  const maxBatchSize = 2;
+  const batchParams = { maxBatchSize, delay: 100 };
+
+  const response = await batchPromises(batchParams)([]);
+  t.deepEqual(response, []);
+});
+
+test('Verify that batchPromises throws error for invalid responseMode', async (t) => {
+  const maxBatchSize = 2;
+  const batchParams = { maxBatchSize, delay: 100, responseMode: 'Invalid' };
+
+  const errorResponse = await t.throwsAsync(batchPromises(batchParams)([]));
+  t.is(errorResponse.message, 'Invalid responseMode provided');
 });
