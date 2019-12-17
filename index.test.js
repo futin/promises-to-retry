@@ -209,3 +209,11 @@ test('Verify that batchPromises returns [] when no promises array is provided', 
   const response = await batchPromises(batchParams)([]);
   t.deepEqual(response, []);
 });
+
+test('Verify that batchPromises throws error for invalid responseMode', async (t) => {
+  const maxBatchSize = 2;
+  const batchParams = { maxBatchSize, delay: 100, responseMode: 'Invalid' };
+
+  const errorResponse = await t.throwsAsync(batchPromises(batchParams)([]));
+  t.is(errorResponse.message, 'Invalid responseMode provided');
+});
