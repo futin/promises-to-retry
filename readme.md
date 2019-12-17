@@ -140,7 +140,8 @@ undefined
 ```
 ## batchPromises(maxBatchSize, delayInMs, responseMode) ⇒ <code>function</code>
 This method is batching list of promises. The batches are invoked with `reflectAllPromises`, so both resolved
-and rejected results are kept. Based on `responseMode` you can receive different data.
+and rejected results are kept. Based on `responseMode` you can receive different data. The method response is a function
+which accepts `promises` array.
 
 Available `ResponseMode` options:
  - ONLY_RESOLVED -> Response will contain only `resolved` promises.
@@ -156,7 +157,27 @@ Available `ResponseMode` options:
 | delayInMs | <code>Number</code> | Delay between batch execution |
 | responseMode | <code>ResponseMode</code> | Different mode will provide different responses, depending on caller requirements. |
 
+### example 
 
+```js
+const { batchPromises } = require('promise-to-retry')
+const errorPromise = () => Promise.reject(new Error('Some error happened'))
+const validPromise = () => Promise.resolve({ I: 'am valid' })
+
+const listOfPromises = [errorPromise, validPromise, validPromise]
+const params = { maxBatchSize: 2, delay: 100, responseMode: 'ONLY_RESOLVED' }
+
+const result = await batchPromises(params)(listOfPromises)
+
+console.log(result)
+/*=========================================================*/
+[
+  { I: 'am valid' },
+  { I: 'am valid' }
+]
+/*=========================================================*/
+
+```
 ## License
 
 MIT © [Andreja Jevtic](https://github.com/futin)
