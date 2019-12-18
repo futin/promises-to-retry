@@ -1,6 +1,6 @@
 # promises-to-retry 
 [![NPM info][nodei.co]](https://npmjs.org/package/promises-to-retry)
-[![coverage-100%]](https://github.com/futin/promises-to-retry/coverage/index.html)
+[![codecov](https://codecov.io/gh/futin/promises-to-retry/branch/master/graph/badge.svg)](https://codecov.io/gh/futin/promises-to-retry)
 [![Build Status](https://travis-ci.com/futin/promises-to-retry.svg?branch=master)](https://travis-ci.com/futin/promises-to-retry)
 
 > Simple utility library that provides retry/reflect mechanism for a list of promises
