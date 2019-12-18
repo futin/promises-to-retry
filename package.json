@@ -15,7 +15,7 @@
     "lint": "eslint --ignore-path .gitignore .",
     "lint-fix": "eslint --fix .",
     "test:coverage": "nyc npm run test",
-    "test:report": "nyc report --reporter=html",
+    "test:report": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "test:coverage:report": "npm run test:coverage && npm run test:report"
   },
   "repository": {
