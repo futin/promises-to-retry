@@ -7,8 +7,6 @@ node_js:
 cache:
   directories:
     - node_modules
-env:
-  -CODECOV_TOKEN=$CODECOV_TOKEN
 before_install:
   - npm update
 install:
