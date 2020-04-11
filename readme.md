@@ -130,9 +130,9 @@ const errorPromise = () => Promise.reject(new Error('Some error happened'))
 const validPromise = () => Promise.resolve({ I: 'am valid' })
 
 const listOfPromises = [errorPromise, validPromise, errorPromise]
-const listOfParams = { maxAttempts: 3, delay: 1200 }
+const params = { maxAttempts: 3, delay: 1200 }
 
-const result = await reflectAndRetryAllRejectedPromises(listOfPromises, listOfParams)
+const result = await reflectAndRetryAllRejectedPromises(listOfPromises, params)
 
 console.log(result)
 /*=========================================================*/
@@ -176,6 +176,51 @@ console.log(result)
 [
   { I: 'am valid' },
   { I: 'am valid' }
+]
+/*=========================================================*/
+
+```
+## racePromisesWithTime(listOfPromises, raceTimeoutInMs, raceTimeoutMessage, responseMode) ⇒ <code>Promise.&lt;Array.&lt;any&gt;&gt;</code>
+For provided list of promises and `raceTimeoutInMs` method will execute promises in parallel and wait for the
+response for certain amount of time. After time is out (based on `raceTimeoutInMs`) caller may decide what response
+to receive. By default method returns only promises that "won" the timeout race. Otherwise it can return all
+reflected promises including promises that "lost" the race.
+
+An example of usage is for making http requests where the response time might differ. Caller might also request retrieving
+"ONLY_RESOLVED" and handle promises that "lost" the race against time.
+ 
+Available `ResponseMode` options:
+ - ONLY_RESOLVED        -> Response will contain only `resolved` promises, including promises that "lost" the timeout race
+ - ONLY_WINNER_PROMISES -> Response will contain only promises which "won" the race against time.
+ - ALL                  -> Response will contain all results. Order of execution is preserved.
+
+**Kind**: global function  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| listOfPromises | <code>Array</code> | A list of promises to race against time |
+| raceTimeoutInMs | <code>Number</code> | The time in milliseconds that each promise will race against |
+| raceTimeoutMessage | <code>String</code> | A custom message provided for promise which "lost" the race |
+| responseMode | <code>ResponseMode</code> | Different mode will provide different responses, depending on caller requirements. |
+
+### example 
+
+```js
+const { racePromisesWithTime } = require('promise-to-retry')
+  const res1 = delay(1000, { I: 'got on time' });
+  const res2 = delay(2000, { Me: 'too' });
+  const res3 = delay(4000, 'too late');
+
+  const listOfPromises = [res1, res2, res3];
+
+  const response = await racePromisesWithTime({ listOfPromises, raceTimeoutInMs: 3000, responseMode: 'ONLY_RESOLVED' });
+
+console.log(result)
+/*=========================================================*/
+[
+  { I: 'got on time' },
+  { Me: 'too' },
+  { raceTimeoutMessage: 'Promise timeout limit reached', timeoutPromise: Promise }
 ]
 /*=========================================================*/
 
