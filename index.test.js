@@ -8,7 +8,8 @@ const sinon = require('sinon');
 const methods = require('./lib');
 
 const {
-  reflectAllPromises, retryAllRejectedPromises, reflectAndRetryAllRejectedPromises, delay, batchPromises
+  reflectAllPromises, retryAllRejectedPromises, reflectAndRetryAllRejectedPromises, delay, batchPromises,
+  racePromisesWithTime
 } = methods;
 
 test.beforeEach((t) => {
@@ -216,4 +217,64 @@ test('Verify that batchPromises throws error for invalid responseMode', async (t
 
   const errorResponse = await t.throwsAsync(batchPromises(batchParams)([]));
   t.is(errorResponse.message, 'Invalid responseMode provided');
+});
+
+test('Test race promises with all passing', async t => {
+  const res1 = delay(1000, 1);
+  const res2 = delay(2000, 2);
+  const res3 = delay(4000, 3);
+
+  const listOfPromises = [res1, res2, res3];
+
+  const response = await racePromisesWithTime({ listOfPromises, raceTimeoutInMs: 5000 });
+  t.is(response.length, 3);
+  t.is(response[0], 1);
+  t.is(response[1], 2);
+  t.is(response[2], 3);
+});
+
+test('Test race promises with 0 passing', async t => {
+  const res1 = delay(1000, 1);
+  const res2 = delay(2000, 2);
+  const res3 = delay(5000, 3);
+
+  const listOfPromises = [res1, res2, res3];
+  const response = await racePromisesWithTime({ listOfPromises, raceTimeoutInMs: 700 });
+
+  t.is(response.length, 0);
+});
+
+test('Test race promises with some passing', async t => {
+  const res1 = delay(1000, 1);
+  const res2 = delay(2000, 2);
+  const res3 = delay(5000, 3);
+
+  const listOfPromises = [res2, res1, res3];
+  const response = await racePromisesWithTime({ listOfPromises, raceTimeoutInMs: 1500 });
+
+  t.is(response.length, 1);
+  t.is(response[0], 1);
+});
+
+test('Test race promises and verify all results', async t => {
+  const res1 = delay(1000, 1);
+  const res2 = delay(2000, 2);
+  const res3 = delay(5000, 3);
+
+  const listOfPromises = [res1, res2, res3];
+  const raceTimeoutMessage = 'My error message';
+  const params = {
+    listOfPromises,
+    raceTimeoutMessage,
+    raceTimeoutInMs: 1500,
+    responseMode: 'ONLY_RESOLVED'
+  };
+
+  const [valid, invalid1, invalid2] = await racePromisesWithTime(params);
+
+  t.is(valid, 1);
+  [invalid1, invalid2].forEach(({ raceTimeoutMessage, timeoutPromise }) => {
+    t.is(raceTimeoutMessage, raceTimeoutMessage);
+    t.true(timeoutPromise instanceof Promise);
+  });
 });
